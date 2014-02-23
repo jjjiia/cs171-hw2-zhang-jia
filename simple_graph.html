@@ -52,7 +52,7 @@ var fill = d3.scale.category10();
 var graph = {nodes:[], links:[]};
 
 var nb_nodes = 10;
-var nb_cat = 1;
+var nb_cat = 2;
 var data;
 var jsonurl = "https://api.github.com/repos/mbostock/d3/pulls/933/commits";
 
@@ -80,14 +80,13 @@ for(var i = 0; i < total; i++){
 				}
 			}						
 		})
-		//console.log(graph.nodes);
-		//console.log(graph.nodes.length);
-		//console.log(graph.nodes);
-		graph_update();
-		console.log(graph.links);								
+		console.log(graph.nodes.length);
+		force.nodes(graph.nodes).start();
+		node  = node.data(graph.nodes);
+		node.enter().append("g").attr("class","node").append("circle").attr("r",10);
+		force.nodes(graph.nodes).start();
 		return graph.nodes, graph.links;			
 	});
-
 
 graph.nodes = d3.range(nb_nodes).map(function() {  
   return { cat:Math.floor(nb_cat*Math.random()) }; 
