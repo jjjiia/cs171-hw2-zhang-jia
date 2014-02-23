@@ -57,19 +57,28 @@ var data;
 var jsonurl = "https://api.github.com/repos/mbostock/d3/pulls/933/commits";
 
 var total = 1;
-//"https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page=100" 
-//sha: "c397ec29dd46d4cc9ba28de52462483a49681424"
+var perpage = 100;//max is 100
+//url format "https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page=100" 
+//iterate through total pages
 for(var i = 0; i < total; i++)
 {
-d3.json("https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page=100", function(data) {
+d3.json("https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page="+perpage, function(data) {
   //console.log(data);
-  console.log(data.length);
+ // console.log(data.length);
   data.forEach(function(d){
+	  //unique id of the commit
 	  d.sha = d.sha;
-	  console.log(d.sha);
+	  //the parents
+	  d.parents = d.parents;
+	  console.log("there are this many parents: "+ d.parents.length);
+	  //unique id of each parent
+	  for(var j = 0; j < d.parents.length; j++){
+		  console.log(d.parents[j].sha);
+	  }
   })
 });
 }
+
 
 graph.nodes = d3.range(nb_nodes).map(function() {  
   return { cat:Math.floor(nb_cat*Math.random()) }; 
