@@ -56,42 +56,41 @@ var data;
 var jsonurl = "https://api.github.com/repos/mbostock/d3/pulls/933/commits";
 
 var total = 1;
-var perpage = 10;//max is 100
+var perpage = 100;//max is 100
 //url format "https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page=100" 
 //iterate through total pages with i - not working yet
 for(var i = 0; i < total; i++){
 	d3.json("https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page="+perpage, function(data) {
+		var commits = {};
+		data.forEach(function(d,k){
+			var node = {"id":d.sha, "cat" : 1, "time": d.commit.author.date}
+			commits[node.id] = node;
+		})
 		nb_nodes = data.length;
 		data.forEach(function(d,k){
-			d.sha = d.sha;//unique id of the commit
-			d.date = d.commit.author.date;
-			graph.nodes.push({"id":d.sha, "cat" : 1, "time": d.date}); //push id ot nodes array
-			d.parents = d.parents;//the parents
+			graph.nodes.push(commits[d.sha]); //push id ot nodes array
 			//console.log("there are this many parents: "+ d.parents.length);
 			for(var j = 0; j < d.parents.length; j++){
-				var target = {"id":d.sha};
-				var source = {"id":d.parents[j].sha}; //unique id of each parent
-				var link = 	{"source":source, "target":target}; //link
-				graph.links.push(link);
-				//console.log(d.sha, d.parents[j].sha);
-				graph.nodes.push({"id":d.parents[j].sha, "cat" : 2});
-				if(d.parents[j].sha in graph.nodes){ //check for duplicates
-					console.log("duplicate");
+				var target = commits[d.sha];
+				var source = commits[d.parents[j].sha];
+				if(source != null){
+					var link = 	{"source":source, "target":target};
+					graph.links.push(link);
 				}
 			}						
 		})		
 		//console.log(graph.nodes);
+		console.log(graph.links);
 		console.log(graph.links.length);
 		
 		//update and draw based on data - code from lab tutorial
-		force.nodes(graph.nodes).start();
+		/*force.nodes(graph.nodes).start();
 		node  = node.data(graph.nodes);
 		node.enter()
 			.append("g")
 			.attr("class","node")
 			.append("circle")
-			.attr("r", 5)
-			.attr("stroke", "#fff")
+			.attr("r", 10)
 			.on("mouseover", function(d){
 				d3.select(this)
 				.property("original-r", function(d){
@@ -107,13 +106,15 @@ for(var i = 0; i < total; i++){
 				d3.select(this)
 				.attr("r", 5);
 			});
-		
-			
+
+			force.links(graph.links).start();
+
 		var link = svg.selectAll(".link")
 		.data(graph.links)
 		.enter()
 		.append("line")
-		.style("stroke-width", 5)
+		.style("stroke-width", 1)
+	  	.attr("stroke", "#aaa")
 		.attr("x1", function(d){return d.source.x})
 		.attr("y1", function(d){return d.source.y})
 		.attr("x2", function(d){return d.target.x})
@@ -122,15 +123,15 @@ for(var i = 0; i < total; i++){
 		              .data(graph.links)
 		              .enter()
 					  .append("line")
-		              .attr("class", "link");
+		              .attr("class", "link");*/
 
-		
+
 	});
 
 
 // Generate the force layout
-var force = d3.layout.force()
-    .size([width, height])
+	var force = d3.layout.force()
+	.size([width, height])
     .charge(-50)
     .linkDistance(10)
     .on("tick", tick)
@@ -230,7 +231,7 @@ function graph_update(delay) {
       .attr("transform", function(d) { 
         return "translate("+d.x+","+d.y+")"; 
       });
-	  
+
 }
 
 d3.select("input[value=\"force\"]").on("click", force_layout);
@@ -263,10 +264,10 @@ var node = svg.selectAll(".node")
               .append("g")
 			  .attr("class", "node")
 			  .append("circle")
-    		  .attr("r", 5)
-			  .attr("stroke", "#ffffff");
+    		  .attr("r", 5);
 
-force_layout();
+			  force_layout();
+
 }
 </script>
 </body>
