@@ -2,14 +2,19 @@
 <meta charset="utf-8">
 <title>Homework 2 Graph</title>
 <style>
+#menu{
+	font-family:helvetica;
+	color: #5077D9;
+	font-size:11px;
+}
   .link {
-    stroke: gray;
-    stroke-width: 1.5px;
+    stroke:#5077D9;
+    stroke-width: 1px;
   }
 
   .node {
-    fill: #66CC66;
-    stroke: #000;
+    fill: #5077D9;
+    stroke: #5077D9;
     stroke-width: 1px;
   }
 
@@ -20,12 +25,13 @@
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<div id = "menu">
   <form>
   Layout:
     <label><input type="radio" name="layout" value="force" checked> Force</label>
     <label><input type="radio" name="layout" value="random" > Random</label>
     <label><input type="radio" name="layout" value="radial"> Radial</label>  
-    <label><input type="radio" name="layout" value="line"> Line</label>
+    <label><input type="radio" name="layout" value="line"> Groups of Ten</label>
     <label><input type="radio" name="layout" value="line_cat"> Line by Category</label>
   </form>
   <form>
@@ -38,10 +44,11 @@
     <label><input type="radio" name="size" value="nosize" checked> None</label>
     <label><input type="radio" name="size" value="size_cat" > Category</label>
   </form>
+</div>
 <script>
 
 var width = 900,
-    height = 700;
+    height = 500;
 
 var svg = d3.select("body").append("svg")
             .attr("width", width)
@@ -59,7 +66,7 @@ var node = null
 
 d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
 	data.forEach(function(d,k){
-		var node = {"id":d.sha, "time": d.commit.author.date}
+		var node = {"id":d.sha, "time": d.commit.author.date, "author":d.commit.author.id, "message":d.commit.message}
 		commits[node.id] = node;
 	})
 
@@ -78,37 +85,33 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 
 	link = svg.selectAll(".link")
 	              .data(graph.links)
-	            .enter().append("line")
+	              .enter().append("line")
 	              .attr("class", "link")
 
 	node = svg.selectAll(".node")
 	              .data(graph.nodes)
-	            .enter()
-	              .append("g").attr("class", "node");
+	              .enter()
+	              .append("g").attr("class", "node")
+	  			.on("mouseover", function(d){
+	  				d3.select(this)
+	  				.property("original-r", function(d){
+	  					d3.select(this)
+	  					.attr("r")})
+	  				.attr("r", "8")
+	  				.append("text")
+				    .text(function(d,i){return graph.nodes[i].message;})
+	  				.attr("x", 100)
+	  				.attr("y", 100);
+	  			})
+	  			.on("mouseout", function(d){
+	  				d3.select(this)
+	  				.attr("r", 5);});
 
 	node.append("circle")
-	    .attr("r", 5)
+	    .attr("r", 2.5)
 
-	force_layout()
+	force_layout();
 })
-
-/*
-graph.nodes = d3.range(nb_nodes).map(function() {  
-  return { cat:Math.floor(nb_cat*Math.random()) }; 
-})
-
-graph.nodes.map(function(d, i) {
-
-  graph.nodes.map(function(e, j) {
-    if(Math.random()>.99 && i!=j)
-      graph.links.push({"source": i, "target": j})
-
-  })
-})
-*/
-
-
-
 
 // Generate the force layout
 var force = d3.layout.force()
@@ -148,10 +151,20 @@ function line_layout() {
   force.stop();
 
   graph.nodes.forEach(function(d, i) {
-    d.y = height/2;
+   // d.y = height/2;
+	d.y = (i*10)%400+20;
+	d.x = i*6+20;
   })
-
+  node.append("text")
+  
+  .attr("x", 5)
+  .attr("dy", ".20em")
+  //.text(function(d,i){return graph.nodes[i].message;})
+  .text(function(d,i){return graph.nodes[i].id;})
+  .attr("font-family", "helvetica")
+  .attr("font-size", 10)
   graph_update(500);
+  
 }
 
 function line_cat_layout() {
