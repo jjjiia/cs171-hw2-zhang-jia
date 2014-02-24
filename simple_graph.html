@@ -31,8 +31,8 @@
     <label><input type="radio" name="layout" value="force" checked> Force</label>
     <label><input type="radio" name="layout" value="random" > Random</label>
     <label><input type="radio" name="layout" value="radial"> Radial</label>  
-    <label><input type="radio" name="layout" value="line"> Groups of Ten</label>
-    <label><input type="radio" name="layout" value="line_cat"> Line by Category</label>
+    <label><input type="radio" name="layout" value="line"> 2.4.a Index Groups of Ten</label>
+    <label><input type="radio" name="layout" value="time"> 2.4.b Time</label>
   </form>
   <form>
   Color:
@@ -64,7 +64,8 @@ var nb_nodes = 100, nb_cat = 10;
 var link = null
 var node = null
 
-d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
+//d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
+	d3.json("commits.json", function(data) {
 	data.forEach(function(d,k){
 		var node = {"id":d.sha, "time": d.commit.author.date, "author":d.commit.author.id, "message":d.commit.message}
 		commits[node.id] = node;
@@ -92,7 +93,7 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	              .data(graph.nodes)
 	              .enter()
 	              .append("g").attr("class", "node")
-	  			.on("mouseover", function(d){
+	  			/*.on("mouseover", function(d){
 	  				d3.select(this)
 	  				.property("original-r", function(d){
 	  					d3.select(this)
@@ -105,7 +106,7 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	  			})
 	  			.on("mouseout", function(d){
 	  				d3.select(this)
-	  				.attr("r", 5);});
+	  				.attr("r", 5);})*/;
 
 	node.append("circle")
 	    .attr("r", 2.5)
@@ -149,24 +150,99 @@ function force_layout() {
 function line_layout() {
 
   force.stop();
+  
+  var margin = {top: 120, right: 20, bottom: 250, left: 20};
+  var scaleX = d3.scale.linear()
+      .domain([0,100])
+      .range([0, 800]);
 
+  var xAxis = d3.svg.axis()
+      .scale(scaleX);
+
+  var svg = d3.select("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "x axis")
+	  .attr("stroke", "#5077D9")
+	  .attr("fill", "none")
+	  
+      .call(xAxis)
+    .selectAll("text")
+      .attr("y", 0)
+      .attr("x", 9)
+      .attr("dy", ".35em")
+      .attr("transform", "rotate(90)")
+      .style("text-anchor", "start")
+	  .attr("font-family", "helvetica")
+	  .attr("font-size", 11);
+	  
   graph.nodes.forEach(function(d, i) {
    // d.y = height/2;
-	d.y = (i*10)%400+20;
-	d.x = i*6+20;
+	d.y = (i*10)%100+20;
+	d.x = i*8+20;
   })
-  node.append("text")
-  
+  /*node.append("text")
   .attr("x", 5)
   .attr("dy", ".20em")
-  //.text(function(d,i){return graph.nodes[i].message;})
   .text(function(d,i){return graph.nodes[i].id;})
   .attr("font-family", "helvetica")
-  .attr("font-size", 10)
+  .attr("font-size", 10)*/
   graph_update(500);
   
 }
+function time_layout(){
+	console.log("time")
+	force.stop;
+	d3.select("x axis")
+	.remove();
+    var margin = {top: 120, right: 20, bottom: 250, left: 20};
+	var t1 = new Date(2012, 0, 1),
+	    t2 = new Date(2013, 0, 1),
+	    t0 = d3.time.month.offset(t1, -1),
+	    t3 = d3.time.month.offset(t2, +1);
 
+	var scaleX = d3.time.scale()
+	    .domain([t0, t3])
+	    .range([t0, t3].map(d3.time.scale()
+	      .domain([t1, t2])
+	      .range([0, width])));
+			
+	    var xAxis = d3.svg.axis()
+	        .scale(scaleX);
+
+	    var svg = d3.select("svg")
+	        .attr("width", width + margin.left + margin.right)
+	        .attr("height", height + margin.top + margin.bottom)
+	      .append("g")
+	        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	    svg.append("g")
+	        .attr("class", "x axis")
+	  	  .attr("stroke", "#5077D9")
+	  	  .attr("fill", "none")
+	  
+	        .call(xAxis)
+	      .selectAll("text")
+	        .attr("y", 0)
+	        .attr("x", 9)
+	        .attr("dy", ".35em")
+	        .attr("transform", "rotate(90)")
+	        .style("text-anchor", "start")
+	  	  .attr("font-family", "helvetica")
+	  	  .attr("font-size", 11);
+		  
+		  graph.nodes.forEach(function(d, i) {
+		   // d.y = height/2;
+			d.y = (i*10)%100+20;
+			d.x = i*8+20;
+		  })
+		  graph_update(500);
+		  
+}
 function line_cat_layout() {
 
   force.stop();
@@ -229,7 +305,7 @@ function graph_update(delay) {
 d3.select("input[value=\"force\"]").on("click", force_layout);
 d3.select("input[value=\"random\"]").on("click", random_layout);
 d3.select("input[value=\"line\"]").on("click", line_layout);
-d3.select("input[value=\"line_cat\"]").on("click", line_cat_layout);
+d3.select("input[value=\"time\"]").on("click", time_layout);
 d3.select("input[value=\"radial\"]").on("click", radial_layout);
 
 d3.select("input[value=\"nocolor\"]").on("click", function() {
