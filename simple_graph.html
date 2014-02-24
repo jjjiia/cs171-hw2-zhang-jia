@@ -14,6 +14,7 @@
   }
 
   .node:hover {
+    fill: red;
   }
 
 </style>
@@ -49,99 +50,78 @@ var svg = d3.select("body").append("svg")
 var fill = d3.scale.category10();
 
 var graph = {nodes:[], links:[]};
+var commits = {}
 
-var nb_nodes = 10;
-var nb_cat = 2;
-var data;
-var jsonurl = "https://api.github.com/repos/mbostock/d3/pulls/933/commits";
+var nb_nodes = 100, nb_cat = 10;
 
-var total = 1;
-var perpage = 100;//max is 100
-//url format "https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page=100" 
-//iterate through total pages with i - not working yet
-for(var i = 0; i < total; i++){
-	d3.json("https://api.github.com/repos/mbostock/d3/commits?page="+i+"&per_page="+perpage, function(data) {
-		var commits = {};
-		data.forEach(function(d,k){
-			var node = {"id":d.sha, "cat" : 1, "time": d.commit.author.date}
-			commits[node.id] = node;
-		})
-		nb_nodes = data.length;
-		data.forEach(function(d,k){
-			graph.nodes.push(commits[d.sha]); //push id ot nodes array
-			//console.log("there are this many parents: "+ d.parents.length);
-			for(var j = 0; j < d.parents.length; j++){
-				var target = commits[d.sha];
-				var source = commits[d.parents[j].sha];
-				if(source != null){
-					var link = 	{"source":source, "target":target};
-					graph.links.push(link);
-				}
-			}						
-		})		
-		//console.log(graph.nodes);
-		console.log(graph.links);
-		console.log(graph.links.length);
-		
-		//update and draw based on data - code from lab tutorial
-		/*force.nodes(graph.nodes).start();
-		node  = node.data(graph.nodes);
-		node.enter()
-			.append("g")
-			.attr("class","node")
-			.append("circle")
-			.attr("r", 10)
-			.on("mouseover", function(d){
-				d3.select(this)
-				.property("original-r", function(d){
-					d3.select(this)
-					.attr("r")})
-				.attr("r", "8")
-				.append("text")
-				.text(console.log("label"))
-				.attr("x", 100)
-				.attr("y", 100);
-			})
-			.on("mouseout", function(d){
-				d3.select(this)
-				.attr("r", 5);
-			});
+var link = null
+var node = null
 
-			force.links(graph.links).start();
+d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
+	data.forEach(function(d,k){
+		var node = {"id":d.sha, "time": d.commit.author.date}
+		commits[node.id] = node;
+	})
 
-		var link = svg.selectAll(".link")
-		.data(graph.links)
-		.enter()
-		.append("line")
-		.style("stroke-width", 1)
-	  	.attr("stroke", "#aaa")
-		.attr("x1", function(d){return d.source.x})
-		.attr("y1", function(d){return d.source.y})
-		.attr("x2", function(d){return d.target.x})
-		.attr("y2", function(d){return d.target.y});
-		var link = svg.selectAll(".link")
-		              .data(graph.links)
-		              .enter()
-					  .append("line")
-		              .attr("class", "link");*/
+	data.forEach(function(d,k){
+		graph.nodes.push(commits[d.sha]); //push id ot nodes array
+		//console.log("there are this many parents: "+ d.parents.length);
+		for(var j = 0; j < d.parents.length; j++){
+			var target = commits[d.sha];
+			var source = commits[d.parents[j].sha];
+			if(source != null){
+				var link = 	{"source":source, "target":target};
+				graph.links.push(link);
+			}
+		}
+	})
+
+	link = svg.selectAll(".link")
+	              .data(graph.links)
+	            .enter().append("line")
+	              .attr("class", "link")
+
+	node = svg.selectAll(".node")
+	              .data(graph.nodes)
+	            .enter()
+	              .append("g").attr("class", "node");
+
+	node.append("circle")
+	    .attr("r", 5)
+
+	force_layout()
+})
+
+/*
+graph.nodes = d3.range(nb_nodes).map(function() {  
+  return { cat:Math.floor(nb_cat*Math.random()) }; 
+})
+
+graph.nodes.map(function(d, i) {
+
+  graph.nodes.map(function(e, j) {
+    if(Math.random()>.99 && i!=j)
+      graph.links.push({"source": i, "target": j})
+
+  })
+})
+*/
 
 
-	});
 
 
 // Generate the force layout
-	var force = d3.layout.force()
-	.size([width, height])
+var force = d3.layout.force()
+    .size([width, height])
     .charge(-50)
     .linkDistance(10)
     .on("tick", tick)
     .on("start", function(d) {})
     .on("end", function(d) {})
 
-
 function tick(d) {
-	//console.log("tick")
-	graph_update(0);
+
+  graph_update(0);
 }
 
 function random_layout() {
@@ -231,7 +211,6 @@ function graph_update(delay) {
       .attr("transform", function(d) { 
         return "translate("+d.x+","+d.y+")"; 
       });
-
 }
 
 d3.select("input[value=\"force\"]").on("click", force_layout);
@@ -252,23 +231,7 @@ d3.select("input[value=\"nosize\"]").on("click", function() {
 
 d3.select("input[value=\"size_cat\"]").on("click", category_size);
 
-var link = svg.selectAll(".link")
-              .data(graph.links)
-              .enter()
-			  .append("line")
-              .attr("class", "link");
 
-var node = svg.selectAll(".node")
-              .data(graph.nodes)
-              .enter()
-              .append("g")
-			  .attr("class", "node")
-			  .append("circle")
-    		  .attr("r", 5);
-
-			  force_layout();
-
-}
 </script>
 </body>
 </html>
