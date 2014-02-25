@@ -68,7 +68,7 @@ var node = null;
 //d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
 	d3.json("commits.json", function(data) {
 	data.forEach(function(d,k){
-		var node = {"id":d.sha, "time": d.commit.author.date, "author":d.commit.author.id, "message":d.commit.message}
+		var node = {"id":d.sha, "time": d.commit.author.date, "author":d.commit.author.name, "message":d.commit.message}
 		commits[node.id] = node;
 	})
 
@@ -85,7 +85,7 @@ var node = null;
 		}
 	})
 	svg.append("svg:defs").selectAll("marker")
-	    .data(["end"])      // Different link/path types can be defined here
+	    .data(["arrow"])      // Different link/path types can be defined here
 	  	.enter().append("svg:marker")    // This section adds in the arrows
 	    .attr("id", String)
 	    .attr("viewBox", "0 -5 10 10")
@@ -94,6 +94,7 @@ var node = null;
 	    .attr("markerWidth", 6)
 	    .attr("markerHeight", 6)
 	    .attr("orient", "auto")
+		.attr("fill", "blue")
 	  	.append("svg:path")
 	    .attr("d", "M0,-5L10,0L0,5");
 		
@@ -109,14 +110,20 @@ var node = null;
 		.attr("class", "link")
 		//.attr("d", diagonal)
 		.attr("class", function(d) {return "link " + d.type; })
-		.attr("marker-end", "url(#end)");
+		.attr("marker-end", "url(#arrow)");
 				 
 	node = svg.selectAll(".node")
 	              .data(graph.nodes)
 	              .enter()
 	              .append("g").attr("class", "node")
 				  .append("circle")
-				  .attr("r", 2);
+				  .attr("r", 2)
+
+				  node.append("text")
+				  
+				  .text(function(d,i){console.log(graph.nodes[i].author); return graph.nodes[i].author;})
+				  .attr("font-family", "helvetica")
+				  .attr("font-size", 12);
 	  			/*.on("mouseover", function(d){
 	  				d3.select(this)
 	  				.property("original-r", function(d){
@@ -178,7 +185,7 @@ remove_axis();
   var margin = {top: 120, right: 20, bottom: 250, left: 20};
   var scaleX = d3.scale.linear()
       .domain([0,100])
-      .range([0, 800]);
+      .range([0,800]);
 
   var xAxis = d3.svg.axis()
       .scale(scaleX);
@@ -214,7 +221,8 @@ remove_axis();
   .attr("dy", ".20em")
   .text(function(d,i){return i;})
   .attr("font-family", "helvetica")
-  .attr("font-size", 7)
+  .attr("color", "red")
+  .attr("font-size", 12);
   graph_update(500);
   
 }
