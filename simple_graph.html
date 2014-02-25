@@ -84,15 +84,33 @@ var node = null;
 			}
 		}
 	})
-	
+	svg.append("svg:defs").selectAll("marker")
+	    .data(["end"])      // Different link/path types can be defined here
+	  	.enter().append("svg:marker")    // This section adds in the arrows
+	    .attr("id", String)
+	    .attr("viewBox", "0 -5 10 10")
+	    .attr("refX", 15)
+	    .attr("refY", -1.5)
+	    .attr("markerWidth", 6)
+	    .attr("markerHeight", 6)
+	    .attr("orient", "auto")
+	  	.append("svg:path")
+	    .attr("d", "M0,-5L10,0L0,5");
+		
+		
+	//var diagonal = d3.svg.diagonal()
+	  //      .projection(function(d) { return [d.x, d.y]; });
+			
 	link = svg.selectAll(".link")
-	              .data(graph.links)
-	              .enter()
-				  .append("line")
-				  .attr("stroke", "blue")
-				  .attr("class", "link")
-	             // .attr("d", lineData);
-				  
+		.data(graph.links)
+		.enter()
+		.append("line")
+		.attr("stroke", "blue")
+		.attr("class", "link")
+		//.attr("d", diagonal)
+		.attr("class", function(d) {return "link " + d.type; })
+		.attr("marker-end", "url(#end)");
+				 
 	node = svg.selectAll(".node")
 	              .data(graph.nodes)
 	              .enter()
@@ -239,7 +257,7 @@ function time_layout(){
 		.attr("font-size", 11);
 		  
 	graph.nodes.forEach(function(d, i) {
-		   d.y = 100;
+		   d.y = 500- i*5;
 		   d.x = scaleX(Date.parse(graph.nodes[i].time));
 	   })
 	   graph_update(500);
