@@ -4,16 +4,16 @@
 <style>
 #menu{
 	font-family:helvetica;
-	color: #5077D9;
+	color: #bbbbbb;
 	font-size:11px;
 }
   .link {
-    stroke:#5077D9;
+    stroke:#bbbbbb;
     stroke-width: 1px;
   }
 
   .node {
-    fill: #5077D9;
+    fill: #bbbbbb;
     stroke-width: 1px;
   }
 
@@ -101,7 +101,7 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	    .attr("markerWidth", 4)
 	    .attr("markerHeight", 4)
 	    .attr("orient", "auto")
-		.attr("fill", "#5077D9")
+		.attr("fill", "#bbbbbb")
 	  	.append("svg:path")
 	    .attr("d", "M0,-5L10,0L0,5");
 		
@@ -113,7 +113,7 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 		.data(graph.links)
 		.enter()
 		.append("line")
-		.attr("stroke", "#5077D9")
+		.attr("stroke", "#bbbbbb")
 		.attr("class", "link")
 		//.attr("d", diagonal)
 		.attr("class", function(d) {return "link " + d.type; })
@@ -138,7 +138,7 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	  			.on("mouseout", function(d){
 	  				d3.select(this)
 	  				.attr("r", 3)
-					.attr("fill", "#5077D9");})
+					.attr("fill", "#bbbbbb");})
 	force_layout();
 })
 
@@ -157,9 +157,10 @@ function tick(d) {
 }
 
 function by_author_layout() {
-	remove_axis();
 	force.stop();
 	//use time axis and also time x
+	remove_axis();
+
 	time_layout();
 	//use index of author array
 	graph.nodes.forEach(function(d, i) {
@@ -206,7 +207,7 @@ function by_author_layout() {
 	.attr("fill", "none")
     .call(xAxis)
     .selectAll("text")
-    .attr("fill", "#38476F")
+    .attr("fill", "#bbbbbb")
     .attr("y", 0)
     .attr("x", 9)
     .attr("dy", ".35em")
@@ -226,9 +227,8 @@ function force_layout() {
 }
 
 function line_layout() {
-
-  force.stop();
-remove_axis();
+	remove_axis();
+  	force.stop();
 
 
   var margin = {top: 120, right: 20, bottom: 250, left: 20};
@@ -247,7 +247,7 @@ remove_axis();
 
   svg.append("g")
       .attr("class", "xAxis")
-	  .attr("stroke", "#38476F")
+	  .attr("stroke", "#bbbbbb")
 	  .attr("fill", "none")
       .call(xAxis)
       .selectAll("text")
@@ -276,11 +276,10 @@ remove_axis();
 }
 
 function time_layout(){
-	//console.log("time1")
+	remove_axis();
 	force.stop;
    	graph_update(500);
 	
-	remove_axis();
     var margin = {top: 20, right: 20, bottom: 50, left: 20};
 	var datestart = new Date(2013,9,10);
 	var dateend = new Date(2014,2,20);
@@ -289,7 +288,7 @@ function time_layout(){
 	.domain([datestart, dateend])
 		.range([0,width]);
 			
-	    xAxis = d3.svg.axis().scale(scaleX).tickSize(10).tickSubdivide(true);
+	    xAxis = d3.svg.axis().scale(scaleX).tickSize(-10).tickSubdivide(true);
 	
 	var svg = d3.select("svg")
 		.attr("width", width + margin.left + margin.right)
@@ -299,10 +298,12 @@ function time_layout(){
 
 	svg.append("g")
 		.attr("class", "xAxis")
-		.attr("stroke", "#38476F")
+		.attr("stroke", "#bbbbbb")
 		.attr("fill", "none")
 		.call(xAxis)
 		.selectAll("text")
+		.attr("fill", "#bbbbbb")
+		.attr("stroke", "none")
 		.attr("y", 0)
 		.attr("x", 9)
 		.attr("dy", ".35em")
@@ -319,10 +320,9 @@ function time_layout(){
 	}
 	function time_layout_expand(){
 		//console.log("time2")
+		remove_axis();
 		force.stop;
 	   	graph_update(500);
-	
-		remove_axis();
 	    var margin = {top: 20, right: 20, bottom: 50, left: 20};
 		var datestart = new Date(2013,9,10);
 		var dateend = new Date(2014,2,20);
@@ -342,10 +342,12 @@ function time_layout(){
 
 		svg.append("g")
 			.attr("class", "xAxis")
-			.attr("stroke", "#38476F")
+			.attr("stroke", "#bbbbbb")
 			.attr("fill", "none")
 			.call(xAxis)
 			.selectAll("text")
+			.attr("fill", "#bbbbbb")
+			.attr("stroke", "none")
 			.attr("y", 0)
 			.attr("x", 9)
 			.attr("dy", ".35em")
@@ -361,31 +363,26 @@ function time_layout(){
 		   graph_update(500);
 	}
 	function remove_axis(){
-		d3.select(".domain")
+		d3.select(".xAxis")
 		.remove();	
+		d3.select(".domain")
+		.remove();
 		d3.selectAll(".tick")
 		.remove();
 		d3.selectAll("text")
 		.remove();
 		//console.log("remove axis");
 	}
-	function line_cat_layout() {
-  	  force.stop();
-	  graph.nodes.forEach(function(d, i) {
-		  d.y = height/2 + d.cat*20;
-  	})
-
-  graph_update(500);
-}
+	
 
 function radial_layout() {
 	remove_axis();
 
-  force.stop();
+  	force.stop();
 
-  var r = height/2;
+ 	 var r = height/2;
 
-  var arc = d3.svg.arc()
+ 	 var arc = d3.svg.arc()
           .outerRadius(r);
 
   var pie = d3.layout.pie()
@@ -413,9 +410,8 @@ function category_color() {
   	  var currentAuthor = graph.nodes[i].author
 	  var recolor = d3.scale.linear()
 	  	.domain([1, 61])
-	  	.range(["#B9BDCD", "#637DDC"]);
+	  	.range(["#dddddd", "#222222"]);
 	  var r = recolor(authors[currentAuthor])
-	  console.log(r)
 	  return r
 	  //return "rgb("+r+","+r+","+r+")"
 	  //d3.rgb(authors[currentAuthor])
@@ -432,7 +428,7 @@ function category_size() {
 	  var currentAuthor = graph.nodes[i].author;
 	  var resize = d3.scale.linear()
 	  	.domain([1, 61])
-	  	.range([2,10]);
+	  	.range([2,6]);
 	  
 //	  console.log(resize(authors[currentAuthor]));
 	  return resize(authors[currentAuthor]);
@@ -460,7 +456,7 @@ d3.select("input[value=\"time\"]").on("click", time_layout);
 d3.select("input[value=\"time2\"]").on("click", time_layout_expand);
 
 d3.select("input[value=\"nocolor\"]").on("click", function() {
-  d3.selectAll("circle").transition().duration(500).style("fill", "#5077D9");
+  d3.selectAll("circle").transition().duration(500).style("fill", "#bbbbbb");
 })
 
 d3.select("input[value=\"color_cat\"]").on("click", category_color);
