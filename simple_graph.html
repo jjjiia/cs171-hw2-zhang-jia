@@ -163,13 +163,30 @@ function tick(d) {
 function by_author_layout() {
 	remove_axis();
 	force.stop();
+	//use time axis and also time x
 	time_layout();
+	//use index of author array
 	graph.nodes.forEach(function(d, i) {
-	   //d.x = i*12+10;
 	   var currentAuthor = graph.nodes[i].author;
-	   var index = authorsOrder.indexOf(currentAuthor);
+	   var index = authorsOrder.indexOf(currentAuthor);	   
 	   d.y = index*20+100;
    })
+   
+	var colorIndex = ["#49989A","#5EE7C0","#2A4842","#BACFB6","#5FE1E2","#39886F","#728C7C","#59BCA8","#A8E4D3"];
+   d3.selectAll("circle")
+ 	.style("fill", function(d, i) { 
+   	  var currentAuthor = graph.nodes[i].author
+ 	   var index = authorsOrder.indexOf(currentAuthor);	
+	   //use mode for case of more than 10 authors
+	   var color = colorIndex[index%colorIndex.length];
+ 	  return color;
+ 	});
+	
+	//make vertical axis for authors
+	
+	
+   
+   
  graph_update(500);
 }
 
