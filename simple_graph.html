@@ -163,9 +163,9 @@ function tick(d) {
 function by_author_layout() {
 	remove_axis();
 	force.stop();
-
+	time_layout();
 	graph.nodes.forEach(function(d, i) {
-	   d.x = i*12+10;
+	   //d.x = i*12+10;
 	   var currentAuthor = graph.nodes[i].author;
 	   var index = authorsOrder.indexOf(currentAuthor);
 	   d.y = index*20+100;
@@ -238,17 +238,16 @@ function time_layout(){
    	graph_update(500);
 	
 	remove_axis();
-    var margin = {top: 120, right: 20, bottom: 50, left: 20};
-	var datestart = new Date(2013,8,25);
-	var dateend = new Date(2014,2,25);
+    var margin = {top: 20, right: 20, bottom: 50, left: 20};
+	var datestart = new Date(2013,9,10);
+	var dateend = new Date(2014,2,20);
 	
 	var scaleX = d3.time.scale()
 	.domain([datestart, dateend])
 		.range([0,width]);
 			
-	    xAxis = d3.svg.axis().scale(scaleX).tickSize(-10).tickSubdivide(true);
+	    xAxis = d3.svg.axis().scale(scaleX).tickSize(10).tickSubdivide(true);
 	
-
 	var svg = d3.select("svg")
 		.attr("width", width + margin.left + margin.right)
 		.attr("height", height + margin.top + margin.bottom)
@@ -281,9 +280,9 @@ function time_layout(){
 	   	graph_update(500);
 	
 		remove_axis();
-	    var margin = {top: 120, right: 20, bottom: 50, left: 20};
-		var datestart = new Date(2013,8,25);
-		var dateend = new Date(2014,2,25);
+	    var margin = {top: 20, right: 20, bottom: 50, left: 20};
+		var datestart = new Date(2013,9,10);
+		var dateend = new Date(2014,2,20);
 	
 		var scaleX = d3.time.scale()
 		.domain([datestart, dateend])
