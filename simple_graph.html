@@ -6,7 +6,7 @@
 	font-family:helvetica;
 	color: #bbbbbb;
 	font-size:11px;
-	position: absolute; top:20px;
+	position: absolute; bottom:20px;
 	left: 20px;
 }
   .link {
@@ -21,9 +21,11 @@
 
   .node:hover {
   }
-  #label{position: absolute; top:10px; left: 400px; 
+  #label{position: absolute; bottom:10px; left: 400px; 
 	  width: 500px;
 	  font-family:helvetica; font-size:14px; color: #66D48E;
+  }
+  #chart{position: absolute; top:150px; left: 20px; 
   }
 </style>
 <body>
@@ -134,10 +136,13 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	  			  .on("mouseover", function(d){
 					  d3.select("#label")
 					  .html("On "+d.time +" "+d.author+" commited "+ d.id+ " with the message "+ d.message);
+					  d3.select(this).attr("r", 5);
 	  			})
 	  			.on("mouseout", function(d){
 				  d3.select("#label")
 				  .html("");
+				  d3.select(this).attr("r", 3);
+				  
 				});
 	force_layout();
 })
