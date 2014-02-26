@@ -14,7 +14,6 @@
 
   .node {
     fill: #5077D9;
-    stroke: #5077D9;
     stroke-width: 1px;
   }
 
@@ -30,20 +29,21 @@
   <form>
   Layout:
     <label><input type="radio" name="layout" value="force" checked> Force</label>
-    <label><input type="radio" name="layout" value="random" > Random</label>
-    <label><input type="radio" name="layout" value="radial"> Radial</label>  
+    <label><input type="radio" name="layout" value="author" > By Author</label>
     <label><input type="radio" name="layout" value="line"> 2.4.a Index Groups of Ten</label>
     <label><input type="radio" name="layout" value="time"> 2.4.b Time</label>
+    <label><input type="radio" name="layout" value="time2"> 2.4.b Time Expand</label>  
+	
   </form>
   <form>
   Color:
     <label><input type="radio" name="color" value="nocolor" checked> None</label>
-    <label><input type="radio" name="color" value="color_cat" > Category</label>
+    <label><input type="radio" name="color" value="color_cat" > Author Frequency</label>
   </form>
   <form>
   Size:
     <label><input type="radio" name="size" value="nosize" checked> None</label>
-    <label><input type="radio" name="size" value="size_cat" > Category</label>
+    <label><input type="radio" name="size" value="size_cat" > Author Frequency</label>
   </form>
 </div>
 <script>
@@ -61,7 +61,8 @@ var graph = {nodes:[], links:[]};
 var commits = {}
 
 var nb_nodes = 100, nb_cat = 10;
-
+var authors = {};
+var authorsOrder = [];
 var link = null;
 var node = null;
 
@@ -69,11 +70,16 @@ var node = null;
 	d3.json("commits.json", function(data) {
 	data.forEach(function(d,k){
 		var node = {"id":d.sha, "time": d.commit.author.date, "author":d.commit.author.name, "message":d.commit.message}
+		var author = d.commit.author.name;
 		commits[node.id] = node;
+		//make a dictionary of authors where name is key, and frequency of appearance is value
+		authors[author] = (authors[author] || 0) + 1;
+		//make a list of authors	
+		authorsOrder = d3.keys(authors);
 	})
-
+	console.log(authorsOrder);
 	data.forEach(function(d,k){
-		graph.nodes.push(commits[d.sha]); //push id ot nodes array
+		graph.nodes.push(commits[d.sha]); //push id to nodes array
 		//console.log("there are this many parents: "+ d.parents.length);
 		for(var j = 0; j < d.parents.length; j++){
 			var target = commits[d.sha];
@@ -91,10 +97,10 @@ var node = null;
 	    .attr("viewBox", "0 -5 10 10")
 	    .attr("refX", 15)
 	    .attr("refY", -1.5)
-	    .attr("markerWidth", 6)
-	    .attr("markerHeight", 6)
+	    .attr("markerWidth", 4)
+	    .attr("markerHeight", 4)
 	    .attr("orient", "auto")
-		.attr("fill", "blue")
+		.attr("fill", "#5077D9")
 	  	.append("svg:path")
 	    .attr("d", "M0,-5L10,0L0,5");
 		
@@ -106,7 +112,7 @@ var node = null;
 		.data(graph.links)
 		.enter()
 		.append("line")
-		.attr("stroke", "blue")
+		.attr("stroke", "#5077D9")
 		.attr("class", "link")
 		//.attr("d", diagonal)
 		.attr("class", function(d) {return "link " + d.type; })
@@ -117,11 +123,10 @@ var node = null;
 	              .enter()
 	              .append("g").attr("class", "node")
 				  .append("circle")
-				  .attr("r", 2)
+				  .attr("r", 3)
 
-				  node.append("text")
-				  
-				  .text(function(d,i){console.log(graph.nodes[i].author); return graph.nodes[i].author;})
+	node.append("text")
+				  .text(function(d,i){return graph.nodes[i].author;})
 				  .attr("font-family", "helvetica")
 				  .attr("font-size", 12);
 	  			/*.on("mouseover", function(d){
@@ -155,17 +160,17 @@ function tick(d) {
   graph_update(0);
 }
 
-function random_layout() {
+function by_author_layout() {
 	remove_axis();
-  
-  force.stop();
+	force.stop();
 
-  graph.nodes.forEach(function(d, i) {
-    d.x = width/4 + 2*width*Math.random()/4;
-    d.y = height/4 + 2*height*Math.random()/4;
-  })
-  
-  graph_update(500);
+	graph.nodes.forEach(function(d, i) {
+	   d.x = i*12+10;
+	   var currentAuthor = graph.nodes[i].author;
+	   var index = authorsOrder.indexOf(currentAuthor);
+	   d.y = index*20+100;
+   })
+ graph_update(500);
 }
 
 function force_layout() {
@@ -228,9 +233,9 @@ remove_axis();
 }
 
 function time_layout(){
-	console.log("time")
+	//console.log("time1")
 	force.stop;
-   graph_update(500);
+   	graph_update(500);
 	
 	remove_axis();
     var margin = {top: 120, right: 20, bottom: 50, left: 20};
@@ -265,12 +270,54 @@ function time_layout(){
 		.attr("font-size", 11);
 		  
 	graph.nodes.forEach(function(d, i) {
-		   d.y = 500- i*5;
+		   d.y = 100;
 		   d.x = scaleX(Date.parse(graph.nodes[i].time));
 	   })
 	   graph_update(500);
 	}
+	function time_layout_expand(){
+		//console.log("time2")
+		force.stop;
+	   	graph_update(500);
 	
+		remove_axis();
+	    var margin = {top: 120, right: 20, bottom: 50, left: 20};
+		var datestart = new Date(2013,8,25);
+		var dateend = new Date(2014,2,25);
+	
+		var scaleX = d3.time.scale()
+		.domain([datestart, dateend])
+			.range([0,width]);
+			
+		    xAxis = d3.svg.axis().scale(scaleX).tickSize(-10).tickSubdivide(true);
+	
+
+		var svg = d3.select("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		svg.append("g")
+			.attr("class", "xAxis")
+			.attr("stroke", "#38476F")
+			.attr("fill", "none")
+			.call(xAxis)
+			.selectAll("text")
+			.attr("y", 0)
+			.attr("x", 9)
+			.attr("dy", ".35em")
+			.attr("transform", "rotate(90)")
+			.style("text-anchor", "start")
+			.attr("font-family", "helvetica")
+			.attr("font-size", 11);
+		  
+		graph.nodes.forEach(function(d, i) {
+			   d.y = 600-i*6;
+			   d.x = scaleX(Date.parse(graph.nodes[i].time));
+		   })
+		   graph_update(500);
+	}
 	function remove_axis(){
 		d3.select(".domain")
 		.remove();	
@@ -278,7 +325,7 @@ function time_layout(){
 		.remove();
 		d3.selectAll("text")
 		.remove();
-		console.log("remove axis");
+		//console.log("remove axis");
 	}
 	function line_cat_layout() {
   	  force.stop();
@@ -317,11 +364,38 @@ function radial_layout() {
 }
 
 function category_color() {
-  d3.selectAll("circle").transition().duration(500).style("fill", function(d) { return fill(d.cat); });
+  d3.selectAll("circle")
+  	.transition()
+	.duration(500)
+	.style("fill", function(d, i) { 
+  	  var currentAuthor = graph.nodes[i].author
+	  var recolor = d3.scale.linear()
+	  	.domain([1, 61])
+	  	.range(["#B9BDCD", "#637DDC"]);
+	  var r = recolor(authors[currentAuthor])
+	  console.log(r)
+	  return r
+	  //return "rgb("+r+","+r+","+r+")"
+	  //d3.rgb(authors[currentAuthor])
+	});
 }
 
+console.log(authors)
+
 function category_size() {
-  d3.selectAll("circle").transition().duration(500).attr("r", function(d) { return Math.sqrt((d.cat+1)*10); });
+  d3.selectAll("circle")
+  .transition()
+  .duration(500)
+  .attr("r", function(d, i) {
+	  var currentAuthor = graph.nodes[i].author;
+	  var resize = d3.scale.linear()
+	  	.domain([1, 61])
+	  	.range([2,10]);
+	  
+	  console.log(currentAuthor);
+	  console.log(resize(authors[currentAuthor]));
+	  return resize(authors[currentAuthor]);
+  });
 }
 
 function graph_update(delay) {
@@ -339,19 +413,19 @@ function graph_update(delay) {
 }
 
 d3.select("input[value=\"force\"]").on("click", force_layout);
-d3.select("input[value=\"random\"]").on("click", random_layout);
+d3.select("input[value=\"author\"]").on("click", by_author_layout);
 d3.select("input[value=\"line\"]").on("click", line_layout);
 d3.select("input[value=\"time\"]").on("click", time_layout);
-d3.select("input[value=\"radial\"]").on("click", radial_layout);
+d3.select("input[value=\"time2\"]").on("click", time_layout_expand);
 
 d3.select("input[value=\"nocolor\"]").on("click", function() {
-  d3.selectAll("circle").transition().duration(500).style("fill", "#66CC66");
+  d3.selectAll("circle").transition().duration(500).style("fill", "#5077D9");
 })
 
 d3.select("input[value=\"color_cat\"]").on("click", category_color);
 
 d3.select("input[value=\"nosize\"]").on("click", function() {
-  d3.selectAll("circle").transition().duration(500).attr("r", 5);
+  d3.selectAll("circle").transition().duration(500).attr("r", 3);
 })
 
 d3.select("input[value=\"size_cat\"]").on("click", category_size);
