@@ -21,17 +21,21 @@
 
   .node:hover {
   }
-  #label{position: absolute; bottom:10px; left: 400px; 
+  #label{position: absolute; bottom:20px; left: 400px; 
 	  width: 500px;
-	  font-family:helvetica; font-size:14px; color: #66D48E;
+	  font-family:helvetica; font-size:12px; color: #66D48E;
   }
   #chart{position: absolute; top:150px; left: 20px; 
+  }
+  #title{position: absolute; bottom:100px; left: 20px; 
+	  font-family:helvetica; font-size:24px; color: #66D48E;
   }
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<div id = "title"><strong>Github Commits Graph HW2</strong></div>
+
 <div id = "menu">
-<strong>Github Commits Graph HW2</strong>
   <form>
   Layout:
     <label><input type="radio" name="layout" value="force" checked>Force</label><br/>
@@ -78,7 +82,7 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	
 	//d3.json("commits.json", function(data) {
 	data.forEach(function(d,k){
-		var node = {"id":d.sha, "time": d.commit.author.date, "author":d.commit.author.name, "message":d.commit.message}
+		var node = {"id":d.sha, "time": d.commit.author.date, "author_id":d.author.id, "author":d.commit.author.name, "message":d.commit.message}
 		var author = d.commit.author.name;
 		commits[node.id] = node;
 		//make a dictionary of authors where name is key, and frequency of appearance is value
@@ -114,39 +118,79 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	    .attr("d", "M0,-5L10,0L0,5");
 		
 		
-	//var diagonal = d3.svg.diagonal()
-	  //      .projection(function(d) { return [d.x, d.y]; });
+
+
+
+	var line = d3.svg.line()
+		.x(function(d){return d.x;})
+		.y(function(d){return d.y;})
+		.interpolate('basis');
 			
 	link = svg.selectAll(".link")
 		.data(graph.links)
 		.enter()
-		.append("line")
+		.append("path")
 		.attr("stroke", "#bbbbbb")
+		.attr("fill", "none")
 		.attr("class", "link")
 		//.attr("d", diagonal)
 		.attr("class", function(d) {return "link " + d.type; })
 		.attr("marker-end", "url(#arrow)");
-				 
-	node = svg.selectAll(".node")
-	              .data(graph.nodes)
-	              .enter()
-	              .append("g").attr("class", "node")
-				  .append("circle")
-				  .attr("r", 3)
-	  			  .on("mouseover", function(d){
-					  d3.select("#label")
-					  .html("On "+d.time +" "+d.author+" commited "+ d.id+ " with the message "+ d.message);
-					  d3.select(this).attr("r", 5);
-	  			})
-	  			.on("mouseout", function(d){
-				  d3.select("#label")
-				  .html("");
-				  d3.select(this).attr("r", 3);
+		
+		
+		//var diagonal = d3.svg.diagonal()
+		  //      .projection(function(d) { return [d.x, d.y]; });
+	  	node = svg.selectAll(".node")
+	  	              .data(graph.nodes)
+	  	              .enter()
+	  	              .append("g")
+	  				  .attr("class", "node")
+	  				  .append("circle")
+	  				  .attr("r", 3)
+	  			  	  .attr("id",function(d) {
+	  			  		var currentAuthor = d.author_id;
+	  			  		return currentAuthor;})
+	  	  			  .on("mouseover", function(d){
+	  					  d3.select("#label")
+	  					  	.html("On "+d.time +" "+d.author+" commited "+ d.id+ " with the message "+ d.message);
+	  					  	d3.select(this)
+	  							.attr("r", 5);
+						
+	  					    var currentAuthor = d.author_id;
+	  						mark_same_author(currentAuthor);
+						
+	  						console.log(currentAuthor);
+	
+	  	  			})
+	  	  			.on("mouseout", function(d){
+	  				  d3.select("#label")
+	  				  .html("");
+	  				  d3.select(this).attr("r", 3);
 				  
-				});
-	force_layout();
-})
+	  				});
 
+		
+		
+	  	force_layout(); 
+
+})
+function mark_same_author(currentAuthor){
+	svg.selectAll('.node').filter(function(d){
+		return d.author_id == currentAuthor; 
+	}).each(function (d, i) {
+		d3.select(this).selectAll('circle').attr('r', 10);
+	})
+	
+	
+	// var nodes = d3.selectAll(".node")[0];
+	// for(var i in nodes){
+	// 	var node = nodes[i];
+	// 	var node_id = d3.select(node).attr('id');
+	// 	if (node_id == currentAuthor){	
+	// 		d3.select(node).attr("r", 10);
+	// 	}
+	// }
+}
 // Generate the force layout
 var force = d3.layout.force()
     .size([width, height])
@@ -184,10 +228,7 @@ function by_author_layout() {
 	   //use mode for case of more than 10 authors
 	   var color = colorIndex[index%colorIndex.length];
  	  return color;
- 	})
-	.attr("class",function(d, i) {
-		var currentAuthor = graph.nodes[i].author
-		return currentAuthor});
+ 	});
 	
 	//make vertical axis for authors
 	var margin = {top: 100, right: 100, bottom: 100, left: 100}
@@ -256,6 +297,8 @@ function line_layout() {
 	  .attr("fill", "none")
       .call(xAxis)
       .selectAll("text")
+	  .attr("fill", "#bbbbbb")
+	  .attr("stroke", "none")
       .attr("y", 0)
       .attr("x", 9)
       .attr("dy", ".35em")
@@ -442,11 +485,35 @@ function category_size() {
 
 function graph_update(delay) {
 
-  link.transition().duration(delay)
-      .attr("x1", function(d) { return d.target.x; })
-      .attr("y1", function(d) { return d.target.y; })
-      .attr("x2", function(d) { return d.source.x; })
-      .attr("y2", function(d) { return d.source.y; });
+  //link.transition().duration(delay)
+  //    .attr("x1", function(d) { return d.target.x; })
+  //    .attr("y1", function(d) { return d.target.y; })
+  //    .attr("x2", function(d) { return d.source.x; })
+  //    .attr("y2", function(d) { return d.source.y; });
+
+
+
+var line = d3.svg.line()
+	.x(function(d){return d.x;})
+	.y(function(d){return d.y;})
+	.interpolate('basis');
+		
+
+
+  link.transition().duration(delay).attr("d", function(d){
+		var offset_y = 20;
+		var x1= d.source.x; var x2=d.target.x;
+		var y1 = d.source.y+offset_y; var y2 = d.target.y+offset_y;
+		var lineData = [
+		  {x: d.source.x, y: d.source.y}, 
+		  {x: d.source.x, y: d.source.y-offset_y}, 
+		  {x: d.target.x, y: d.target.y+offset_y}, 
+		  {x: d.target.x, y: d.target.y}
+		];
+		
+		return line(lineData);
+	})
+
 
   node.transition().duration(delay)
       .attr("transform", function(d) { 
