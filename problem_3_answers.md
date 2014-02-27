@@ -15,6 +15,7 @@ For the time scale, because i had built the whole visualization using d3 data, i
 This is a wish list in the order of how I will create the features: 
 
 for the author/time layout - 
+Dynamic placement of authors - so that it always fits the contributors on the page, because there is not reason to scroll down that much.
 Dynamic timescale - the width maps to about 10% of the the entire timeline of the repo so that there is not as much scrolling as the current github network graph
 Adjustable timescale - to zoom in and out for the timescale, so that a overview can be achieved.
 A input box for the repo name so that maybe others will be able to use it.
