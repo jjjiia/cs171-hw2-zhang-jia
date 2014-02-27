@@ -35,7 +35,7 @@
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <div id = "prompt">aa</div>
-<div id = "title"><strong>Github Commits Graph HW2</strong></div>
+<div id = "title"><strong>Github Commits:</strong></div>
 
 <div id = "menu">
   <form>
@@ -78,13 +78,16 @@ var authors = {};
 var authorsOrder = [];
 var link = null;
 var node = null;
-
-//d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
-//d3.json("https://api.github.com/repos/caleydo/caleydo/commits?page=1&per_page=100", function(data) {
-//d3.json("https://api.github.com/repos/twbs/bootstrap/commits?per_page=100", function(data) {
-	
-	d3.json("commits.json", function(data) {
-	data.forEach(function(d,k){
+//var author_repo = "twbs/bootstrap"
+//var url = "commits_test1.json"
+//var author_repo = "jquery/jquery"
+var author_repo = "mbostock/d3"
+var url = "https://api.github.com/repos/"+author_repo+"/commits?per_page=100"
+console.log(url)
+d3.select("#title")
+	.html(author_repo);
+d3.json(url, function(data) {
+		data.forEach(function(d,k){
 		var node = {"id":d.sha, "time": d.commit.author.date, "author_id":d.author.id, "author":d.commit.author.name, "message":d.commit.message}
 		var author = d.commit.author.name;
 		commits[node.id] = node;
@@ -330,6 +333,7 @@ function time_layout(){
    	graph_update(500);
 	
     var margin = {top: 20, right: 20, bottom: 50, left: 20};
+	//TODO: make dates dynamic, get min and max
 	var datestart = new Date(2012,2,20);
 	var dateend = new Date(2014,2,20);
 	
