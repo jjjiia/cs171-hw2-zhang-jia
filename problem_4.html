@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Problem 4</title>
+<style>
+#menu{
+	font-family:helvetica;
+	color: #bbbbbb;
+	font-size:11px;
+	position: absolute; bottom:20px;
+	left: 20px;
+}
+  .link {
+    stroke:#bbbbbb;
+    stroke-width: 1px;
+  }
+
+  .node {
+    fill: #bbbbbb;
+    stroke-width: 1px;
+  }
+
+  .node:hover {
+  }
+  #label{position: absolute; bottom:20px; left: 400px; 
+	  width: 500px;
+	  font-family:helvetica; font-size:12px; color: #66D48E;
+  }
+  #chart{position: absolute; top:150px; left: 20px; 
+  }
+  #title{position: absolute; bottom:100px; left: 20px; 
+	  font-family:helvetica; font-size:24px; color: #66D48E;
+  }
+  #prompt{position: absolute; top: 100px; left:40px;font-family:helvetica; font-size:12px; color: #66D48E;}
+  #keyword{position: absolute; bottom: 10px; left:40px;}
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<div id = "prompt"></div>
+<div id = "title"><strong>Github Commits:</strong></div>
+<div id = "keyword"></div>
+<div id = "menu">
+
+   Search for: <input id="search-field" type="text" name="keyword" placeholder="Fixed"> in comments <input id="search-button" type="Submit" value="Go">
+
+</div>
+<div id = "chart">
+<script>
+
+
+// Generate the force layout
+var force = d3.layout.force()
+    .size([width, height])
+    .charge(-50)
+    .linkDistance(10)
+    .on("tick", tick)
+    .on("start", function(d) {})
+    .on("end", function(d) {})
+
+var width = 900;
+var height = 600;
+
+var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+var fill = d3.scale.category10();
+
+var graph = {nodes:[], links:[]};
+var commits = {}
+
+var nb_nodes = 100, nb_cat = 10;
+var authors = {};
+var authorsOrder = [];
+var link = null;
+var node = null;
+//var keyword = "faster";
+var messages = [];
+var sorted_dates;
+keywordSearch("")
+
+d3.select("#search-button").on("click", function(d) {
+	var value = document.getElementById("search-field").value
+	keywordSearch(value)
+	return false
+})
+
+function keywordSearch(keyword) {
+
+	d3.selectAll("svg").remove()
+
+	graph = {nodes:[], links:[]};
+	commits = {}
+
+	svg = d3.select("body").append("svg")
+	            .attr("width", width)
+	            .attr("height", height);
+
+	//var author_repo = "twbs/bootstrap"
+	var url = "commits.json"
+	var author_repo = "jquery/jquery"
+	var date_array= [];
+	//var author_repo = "mbostock/d3"
+	//var url = "https://api.github.com/repos/"+author_repo+"/commits?per_page=100"
+	console.log(url)
+	d3.select("#title")
+		.html(author_repo);
+	d3.json(url, function(data) {
+			data.forEach(function(d,k){
+			var node = {"id":d.sha, "time": d.commit.author.date, "author_id":d.author.id, "author":d.commit.author.name, "message":d.commit.message}
+			var author = d.commit.author.name;
+			commits[node.id] = node;
+			messages.push(d.commit.message);
+			var message_words = messages.join();
+			date_array.push(d.commit.author.date);
+			sorted_dates = date_array.sort();
+			//make a dictionary of authors where name is key, and frequency of appearance is value
+			authors[author] = (authors[author] || 0) + 1;
+			//make a list of authors	
+			authorsOrder = d3.keys(authors);
+		})
+		console.log(messages);
+		data.forEach(function(d,k){
+			graph.nodes.push(commits[d.sha]); //push id to nodes array
+			//console.log("there are this many parents: "+ d.parents.length);
+			for(var j = 0; j < d.parents.length; j++){
+				var target = commits[d.sha];
+				var source = commits[d.parents[j].sha];
+				if(source != null){
+					var link = 	{"source":source, "target":target};
+					graph.links.push(link);
+				}
+			}
+		})
+		svg.append("svg:defs").selectAll("marker")
+		    .data(["arrow"])      // Different link/path types can be defined here
+		  	.enter().append("svg:marker")    // This section adds in the arrows
+		    .attr("id", String)
+		    .attr("viewBox", "0 -5 10 10")
+		    .attr("refX", 15)
+		    .attr("refY", -1.5)
+		    .attr("markerWidth", 4)
+		    .attr("markerHeight", 4)
+		    .attr("orient", "auto")
+			.attr("fill", "#bbbbbb")
+		  	.append("svg:path")
+		    .attr("d", "M0,-5L10,0L0,5");
+		
+		
+
+
+
+		var line = d3.svg.line()
+			.x(function(d){return d.x;})
+			.y(function(d){return d.y;})
+			.interpolate('basis');
+			
+		link = svg.selectAll(".link")
+			.data(graph.links)
+			.enter()
+			.append("path")
+			.attr("stroke", "#bbbbbb")
+			.attr("fill", "none")
+			.attr("class", "link")
+			//.attr("d", diagonal)
+			.attr("class", function(d) {return "link " + d.type; })
+			.attr("marker-end", "url(#arrow)");
+		
+		
+			//var diagonal = d3.svg.diagonal()
+			  //      .projection(function(d) { return [d.x, d.y]; });
+		  	node = svg.selectAll(".node")
+		  	              .data(graph.nodes)
+		  	              .enter()
+		  	              .append("g")
+		  				  .attr("class", "node")
+		  				  .append("circle")
+		  				  .attr("r", 3)
+		  			  	  .attr("id",function(d) {
+		  			  		var currentAuthor = d.author_id;
+		  			  		return currentAuthor;})
+		  	  			  .on("mouseover", function(d){
+		  					  d3.select("#label")
+		  					  	.html("On "+d.time +" "+d.author+" commited "+ d.id+ " with the message "+ d.message);
+							})
+		  	  			.on("mouseout", function(d){
+		  				  d3.select("#label")
+		  				  .html("");
+						    var currentAuthor = d.author_id;
+							unmark_same_author(currentAuthor);
+		  				});
+						mark_same_author(keyword);
+		
+		
+		  	by_author_layout(); 
+
+	})
+}
+
+function mark_same_author(keyword){
+	svg.selectAll('.node').filter(function(d){
+		for(var i in d){
+			var word_n = d.message.search(keyword)
+			if (word_n>0){
+				d3.select(this)
+				.selectAll('circle')
+				.attr('fill', "red");
+				console.log("yes count")
+			}
+			else{console.log("no count")}
+		}
+	})
+}
+
+function tick(d) {
+
+  graph_update(0);
+}
+
+function by_author_layout() {
+	force.stop();
+	//use time axis and also time x
+	//remove_axis();
+
+	time_layout();
+	//use index of author array
+	graph.nodes.forEach(function(d, i) {
+	   var currentAuthor = graph.nodes[i].author;
+	   var index = authorsOrder.indexOf(currentAuthor);
+	   var space = (height-200)/(authorsOrder.length-1);
+	   d.y = index*space+100;
+   })
+   
+	
+	//make vertical axis for authors
+	var margin = {top: 100, right: 100, bottom: 100, left: 100}
+
+	var x = d3.scale.ordinal()
+	    .domain(authorsOrder)
+	    .rangePoints([0, height-200]);
+
+	var xAxis = d3.svg.axis()
+	    .scale(x)
+	    .orient("left");
+
+	var svg = d3.select("svg")
+	    .attr("width", width + margin.left + margin.right)
+	    .attr("height", height)
+	  .append("g")
+	    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	svg.append("g")
+	.attr("class", "xAxis")
+	.attr("stroke", "none")
+	.attr("fill", "none")
+    .call(xAxis)
+    .selectAll("text")
+    .attr("fill", "#bbbbbb")
+    .attr("y", 0)
+    .attr("x", 9)
+    .attr("dy", ".35em")
+	.attr("font-family", "helvetica")
+	.attr("font-size", 11);
+		
+		
+ graph_update(500);
+}
+
+function force_layout() {
+	remove_axis(); 
+	d3.select("#prompt")
+	  	.html(keyword);
+ force.nodes(graph.nodes)
+      .links(graph.links)
+      .start();
+	 
+}
+
+function line_layout() {
+	remove_axis();
+	remove_prompt();
+	
+  	force.stop();
+
+
+  var margin = {top: 120, right: 20, bottom: 250, left: 20};
+  var scaleX = d3.scale.linear()
+      .domain([0,100])
+      .range([0,800]);
+
+  var xAxis = d3.svg.axis()
+      .scale(scaleX);
+
+  var svg = d3.select("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.append("g")
+      .attr("class", "xAxis")
+	  .attr("stroke", "#bbbbbb")
+	  .attr("fill", "none")
+      .call(xAxis)
+      .selectAll("text")
+	  .attr("fill", "#bbbbbb")
+	  .attr("stroke", "none")
+      .attr("y", 0)
+      .attr("x", 9)
+      .attr("dy", ".35em")
+      .attr("transform", "rotate(90)")
+      .style("text-anchor", "start")
+	  .attr("font-family", "helvetica")
+	  .attr("font-size", 11);
+	  
+  graph.nodes.forEach(function(d, i) {
+   // d.y = height/2;
+	d.y = (height/2)/authors.length*i+20;
+	d.x = i*8+20;
+  })
+  node.append("text")
+  .attr("x", 5)
+  .attr("dy", ".20em")
+  .text(function(d,i){return i;})
+  .attr("font-family", "helvetica")
+  .attr("color", "red")
+  .attr("font-size", 12);
+  graph_update(500);
+  
+}
+
+function time_layout(){
+	remove_axis();
+	remove_prompt();
+	force.stop;
+   	graph_update(500);
+	
+    var margin = {top: 20, right: 20, bottom: 50, left: 20};
+	//TODO: make dates dynamic, get min and max
+	
+	var datestart = new Date(sorted_dates[0]);
+	var dateend = new Date(sorted_dates[sorted_dates.length-1]);
+    console.log(graph.nodes.length-1);
+	
+	var scaleX = d3.time.scale()
+	.domain([datestart, dateend])
+		.range([130,width-20]);
+			
+	    xAxis = d3.svg.axis().scale(scaleX).tickSize(-10).tickSubdivide(true);
+	
+	var svg = d3.select("svg")
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+		.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+	svg.append("g")
+		.attr("class", "xAxis")
+		.attr("stroke", "#bbbbbb")
+		.attr("fill", "none")
+		.call(xAxis)
+		.selectAll("text")
+		.attr("fill", "#bbbbbb")
+		.attr("stroke", "none")
+		.attr("y", 0)
+		.attr("x", 9)
+		.attr("dy", ".35em")
+		.attr("transform", "rotate(90)")
+		.style("text-anchor", "start")
+		.attr("font-family", "helvetica")
+		.attr("font-size", 11);
+		  
+	graph.nodes.forEach(function(d, i) {
+		d.y = (height/2)/authors.length*i+20;
+		   d.x = scaleX(Date.parse(graph.nodes[i].time));
+	   })
+	   graph_update(500);
+	}
+	
+	function remove_axis(){
+		d3.select(".xAxis")
+		.remove();	
+		d3.select(".domain")
+		.remove();
+		d3.selectAll(".tick")
+		.remove();
+		d3.selectAll("text")
+		.remove();
+		//console.log("remove axis");
+	}
+	function remove_prompt(){
+		d3.select("#prompt")
+		.remove();
+	}
+
+function radial_layout() {
+	remove_axis();
+
+  	force.stop();
+
+ 	 var r = height/2;
+
+ 	 var arc = d3.svg.arc()
+          .outerRadius(r);
+
+  var pie = d3.layout.pie()
+  .sort(function(a, b) { return a.cat - b.cat;})
+          .value(function(d, i) { return 1; }); // equal share for each point
+
+  graph.nodes = pie(graph.nodes).map(function(d, i) {
+    d.innerRadius = 0;
+    d.outerRadius = r;
+    d.data.x = arc.centroid(d)[0]+height/2;
+    d.data.y = arc.centroid(d)[1]+width/2;
+    d.data.endAngle = d.endAngle; 
+    d.data.startAngle = d.startAngle; 
+    return d.data;
+  })
+
+  graph_update(500);
+}
+
+function category_color() {
+	var colorIndex = ["#49989A","#5EE7C0","#2A4842","#BACFB6","#5FE1E2","#39886F","#728C7C","#59BCA8","#A8E4D3"];
+   d3.selectAll("circle")
+ 	.style("fill", function(d, i) { 
+   	  var currentAuthor = graph.nodes[i].author
+ 	  var index = authorsOrder.indexOf(currentAuthor);	
+	   //use mode for case of more than 10 authors
+	   var color = colorIndex[index%colorIndex.length];
+ 	  return color;
+ 	});
+}
+
+//console.log(authors)
+
+function category_size() {
+  d3.selectAll("circle")
+  .transition()
+  .duration(500)
+  .attr("r", function(d, i) {
+	  var currentAuthor = graph.nodes[i].author;
+	  var resize = d3.scale.linear()
+	  	.domain([1, 61])
+	  	.range([2,6]);
+	  
+//	  console.log(resize(authors[currentAuthor]));
+	  return resize(authors[currentAuthor]);
+  });
+}
+
+function graph_update(delay) {
+
+  //link.transition().duration(delay)
+  //    .attr("x1", function(d) { return d.target.x; })
+  //    .attr("y1", function(d) { return d.target.y; })
+  //    .attr("x2", function(d) { return d.source.x; })
+  //    .attr("y2", function(d) { return d.source.y; });
+
+
+
+	var line = d3.svg.line()
+		.x(function(d){return d.x;})
+		.y(function(d){return d.y;})
+		.interpolate('basis');
+		
+
+
+  link.transition().duration(0).attr("d", function(d){
+		var offset_y = 2;
+		var offset_x = 10;
+		var x1= d.source.x; var x2=d.target.x;
+		var y1 = d.source.y+offset_y; var y2 = d.target.y+offset_y;
+		var lineData = [
+		  {x: d.source.x, y: d.source.y}, 
+		  {x: d.source.x+offset_x, y: d.source.y+offset_y}, 
+		  {x: d.target.x-offset_x, y: d.target.y-offset_y}, 
+		  {x: d.target.x, y: d.target.y}
+		];
+		
+		return line(lineData);
+	})
+
+
+  node.attr("transform", function(d) { 
+        return "translate("+d.x+","+d.y+")"; 
+      });
+}
+
+</script>
+</div>
+<p id = "label"></p>
+
+</body>
+</html>
