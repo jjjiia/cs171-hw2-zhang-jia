@@ -30,7 +30,7 @@
   #title{position: absolute; bottom:100px; left: 20px; 
 	  font-family:helvetica; font-size:24px; color: #66D48E;
   }
-  #prompt{position: absolute; top: 100px; left:40px;}
+  #prompt{position: absolute; top: 100px; left:40px;font-family:helvetica; font-size:12px; color: #66D48E;}
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -79,10 +79,11 @@ var authorsOrder = [];
 var link = null;
 var node = null;
 
-d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
+//d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", function(data) {
 //d3.json("https://api.github.com/repos/caleydo/caleydo/commits?page=1&per_page=100", function(data) {
+//d3.json("https://api.github.com/repos/twbs/bootstrap/commits?per_page=100", function(data) {
 	
-	//d3.json("commits.json", function(data) {
+	d3.json("commits.json", function(data) {
 	data.forEach(function(d,k){
 		var node = {"id":d.sha, "time": d.commit.author.date, "author_id":d.author.id, "author":d.commit.author.name, "message":d.commit.message}
 		var author = d.commit.author.name;
@@ -329,7 +330,7 @@ function time_layout(){
    	graph_update(500);
 	
     var margin = {top: 20, right: 20, bottom: 50, left: 20};
-	var datestart = new Date(2013,9,10);
+	var datestart = new Date(2012,2,20);
 	var dateend = new Date(2014,2,20);
 	
 	var scaleX = d3.time.scale()
