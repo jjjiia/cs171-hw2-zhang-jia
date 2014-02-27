@@ -34,7 +34,7 @@
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
-<div id = "prompt">aa</div>
+<div id = "prompt"></div>
 <div id = "title"><strong>Github Commits:</strong></div>
 
 <div id = "menu">
@@ -43,9 +43,7 @@
     <label><input type="radio" name="layout" value="force" checked>Force</label><br/>
     <label><input type="radio" name="layout" value="line"> 2.4.a Index</label>
     <label><input type="radio" name="layout" value="time"> 2.4.b Time</label>
-    <label><input type="radio" name="layout" value="time2"> 2.4.b Time2</label>  
-    <label><input type="radio" name="layout" value="author" > 2.7 Author</label>
-	
+    <label><input type="radio" name="layout" value="author" > 2.7 Time + Author</label>
   </form>
   <form>
   Color:
@@ -78,6 +76,8 @@ var authors = {};
 var authorsOrder = [];
 var link = null;
 var node = null;
+var date_array= [];
+
 //var author_repo = "twbs/bootstrap"
 //var url = "commits_test1.json"
 //var author_repo = "jquery/jquery"
@@ -91,6 +91,9 @@ d3.json(url, function(data) {
 		var node = {"id":d.sha, "time": d.commit.author.date, "author_id":d.author.id, "author":d.commit.author.name, "message":d.commit.message}
 		var author = d.commit.author.name;
 		commits[node.id] = node;
+		//make date array sorted early to late
+		date_array.push(d.commit.author.date);
+		sorted_dates = date_array.sort();
 		//make a dictionary of authors where name is key, and frequency of appearance is value
 		authors[author] = (authors[author] || 0) + 1;
 		//make a list of authors	
@@ -334,12 +337,12 @@ function time_layout(){
 	
     var margin = {top: 20, right: 20, bottom: 50, left: 20};
 	//TODO: make dates dynamic, get min and max
-	var datestart = new Date(2012,2,20);
-	var dateend = new Date(2014,2,20);
+	var datestart = new Date(sorted_dates[0]);
+	var dateend = new Date(sorted_dates[sorted_dates.length-1]);
 	
 	var scaleX = d3.time.scale()
 	.domain([datestart, dateend])
-		.range([0,width]);
+		.range([130,width-20]);
 			
 	    xAxis = d3.svg.axis().scale(scaleX).tickSize(-10).tickSubdivide(true);
 	
@@ -377,12 +380,12 @@ function time_layout(){
 		force.stop;
 	   	graph_update(500);
 	    var margin = {top: 20, right: 20, bottom: 50, left: 20};
-		var datestart = new Date(2013,9,10);
-		var dateend = new Date(2014,2,20);
+		var datestart = new Date(sorted_dates[0]);
+		var dateend = new Date(sorted_dates[sorted_dates.length-1]);
 	
 		var scaleX = d3.time.scale()
 		.domain([datestart, dateend])
-			.range([0,width]);
+			.range([130,width-20]);
 			
 		    xAxis = d3.svg.axis().scale(scaleX).tickSize(-10).tickSubdivide(true);
 	
