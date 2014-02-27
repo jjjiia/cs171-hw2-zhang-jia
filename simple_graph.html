@@ -30,9 +30,11 @@
   #title{position: absolute; bottom:100px; left: 20px; 
 	  font-family:helvetica; font-size:24px; color: #66D48E;
   }
+  #prompt{position: absolute; top: 100px; left:40px;}
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
+<div id = "prompt">aa</div>
 <div id = "title"><strong>Github Commits Graph HW2</strong></div>
 
 <div id = "menu">
@@ -48,7 +50,7 @@
   <form>
   Color:
     <label><input type="radio" name="color" value="nocolor" checked> None</label>
-    <label><input type="radio" name="color" value="color_cat" > Author Frequency</label>
+    <label><input type="radio" name="color" value="color_cat" > Author</label>
   </form>
   <form>
   Size:
@@ -153,20 +155,15 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	  	  			  .on("mouseover", function(d){
 	  					  d3.select("#label")
 	  					  	.html("On "+d.time +" "+d.author+" commited "+ d.id+ " with the message "+ d.message);
-	  					  	d3.select(this)
-	  							.attr("r", 5);
-						
+	  				
 	  					    var currentAuthor = d.author_id;
 	  						mark_same_author(currentAuthor);
-						
-	  						console.log(currentAuthor);
-	
 	  	  			})
 	  	  			.on("mouseout", function(d){
 	  				  d3.select("#label")
 	  				  .html("");
-	  				  d3.select(this).attr("r", 3);
-				  
+					    var currentAuthor = d.author_id;
+						unmark_same_author(currentAuthor);
 	  				});
 
 		
@@ -174,13 +171,20 @@ d3.json("https://api.github.com/repos/mbostock/d3/commits?page=1&per_page=100", 
 	  	force_layout(); 
 
 })
+
 function mark_same_author(currentAuthor){
 	svg.selectAll('.node').filter(function(d){
 		return d.author_id == currentAuthor; 
 	}).each(function (d, i) {
-		d3.select(this).selectAll('circle').attr('r', 10);
+		d3.select(this).selectAll('circle').attr('fill', "red");
 	})
-	
+}
+function unmark_same_author(currentAuthor){
+		svg.selectAll('.node').filter(function(d){
+			return d.author_id == currentAuthor; 
+		}).each(function (d, i) {
+			d3.select(this).selectAll('circle').attr('fill', "#bbb");
+		})	
 	
 	// var nodes = d3.selectAll(".node")[0];
 	// for(var i in nodes){
@@ -220,15 +224,6 @@ function by_author_layout() {
 	   d.y = index*space+100;
    })
    
-	var colorIndex = ["#49989A","#5EE7C0","#2A4842","#BACFB6","#5FE1E2","#39886F","#728C7C","#59BCA8","#A8E4D3"];
-   d3.selectAll("circle")
- 	.style("fill", function(d, i) { 
-   	  var currentAuthor = graph.nodes[i].author
- 	  var index = authorsOrder.indexOf(currentAuthor);	
-	   //use mode for case of more than 10 authors
-	   var color = colorIndex[index%colorIndex.length];
- 	  return color;
- 	});
 	
 	//make vertical axis for authors
 	var margin = {top: 100, right: 100, bottom: 100, left: 100}
@@ -265,15 +260,19 @@ function by_author_layout() {
 }
 
 function force_layout() {
-	remove_axis();
-
+	remove_axis(); 
+	d3.select("#prompt")
+	  	.html("Roll over nodes to highlight all commits by same author");
  force.nodes(graph.nodes)
       .links(graph.links)
       .start();
+	 
 }
 
 function line_layout() {
 	remove_axis();
+	remove_prompt();
+	
   	force.stop();
 
 
@@ -325,6 +324,7 @@ function line_layout() {
 
 function time_layout(){
 	remove_axis();
+	remove_prompt();
 	force.stop;
    	graph_update(500);
 	
@@ -421,7 +421,10 @@ function time_layout(){
 		.remove();
 		//console.log("remove axis");
 	}
-	
+	function remove_prompt(){
+		d3.select("#prompt")
+		.remove();
+	}
 
 function radial_layout() {
 	remove_axis();
@@ -451,19 +454,15 @@ function radial_layout() {
 }
 
 function category_color() {
-  d3.selectAll("circle")
-  	.transition()
-	.duration(500)
-	.style("fill", function(d, i) { 
-  	  var currentAuthor = graph.nodes[i].author
-	  var recolor = d3.scale.linear()
-	  	.domain([1, 61])
-	  	.range(["#dddddd", "#222222"]);
-	  var r = recolor(authors[currentAuthor])
-	  return r
-	  //return "rgb("+r+","+r+","+r+")"
-	  //d3.rgb(authors[currentAuthor])
-	});
+	var colorIndex = ["#49989A","#5EE7C0","#2A4842","#BACFB6","#5FE1E2","#39886F","#728C7C","#59BCA8","#A8E4D3"];
+   d3.selectAll("circle")
+ 	.style("fill", function(d, i) { 
+   	  var currentAuthor = graph.nodes[i].author
+ 	  var index = authorsOrder.indexOf(currentAuthor);	
+	   //use mode for case of more than 10 authors
+	   var color = colorIndex[index%colorIndex.length];
+ 	  return color;
+ 	});
 }
 
 //console.log(authors)
@@ -493,21 +492,22 @@ function graph_update(delay) {
 
 
 
-var line = d3.svg.line()
-	.x(function(d){return d.x;})
-	.y(function(d){return d.y;})
-	.interpolate('basis');
+	var line = d3.svg.line()
+		.x(function(d){return d.x;})
+		.y(function(d){return d.y;})
+		.interpolate('basis');
 		
 
 
   link.transition().duration(delay).attr("d", function(d){
-		var offset_y = 20;
+		var offset_y = 6;
+		var offset_x = 6;
 		var x1= d.source.x; var x2=d.target.x;
 		var y1 = d.source.y+offset_y; var y2 = d.target.y+offset_y;
 		var lineData = [
 		  {x: d.source.x, y: d.source.y}, 
-		  {x: d.source.x, y: d.source.y-offset_y}, 
-		  {x: d.target.x, y: d.target.y+offset_y}, 
+		  {x: d.source.x+offset_x, y: d.source.y+offset_y}, 
+		  {x: d.target.x-offset_x, y: d.target.y-offset_y}, 
 		  {x: d.target.x, y: d.target.y}
 		];
 		
